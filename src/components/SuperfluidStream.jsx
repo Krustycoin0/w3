@@ -286,7 +286,7 @@ const SuperfluidStream = () => {
        </CardGroup>    
       </div>
       <div className="sfb__heather">
-        <h1 className="gradient__text">Exchange Near</h1>
+        <h1 className="gradient__text">Exchange BOB4.0</h1>
       </div>
       <div className="sfb__swap">
         <WidgetSwap />
