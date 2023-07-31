@@ -8,7 +8,6 @@ import { FormGroup, FormControl, Spinner, Card, Container, Row, Col, Stack } fro
 import createNewFlow from '../../superfluidFunctions/createStream';
 import updateExistingFlow from '../../superfluidFunctions/updateStream';
 import deleteFlow from '../../superfluidFunctions/deleteStream';
-import UpgradeNear from '../../superfluidFunctions/upgradeNear';
 import DowngradeNear from '../../superfluidFunctions/downgradeNear';
 
 const Stream = () => {
@@ -128,11 +127,6 @@ const Stream = () => {
        <CardGroup>
          <Card>
            <Card.Body>
-             <UpgradeNear />
-           </Card.Body>
-         </Card>
-         <Card>
-           <Card.Body>
              <Card.Title>Send Stream</Card.Title>
              <Form>
               <FormGroup className="mb-4">
@@ -227,57 +221,4 @@ const Stream = () => {
                         setIsButtonLoading(true);
                         updateExistingFlow(recipient, flowRate);
                         setTimeout(() => {
-                            setIsButtonLoading(false);
-                        }, 1000);
-                    }}
-                >
-                       Click to Update Your Stream
-                    </UpdateButton>
-                  </Col>
-                  <Col></Col>
-                </Row>
-                </Container>
-              </Form>
-           </Card.Body>
-         </Card>
-         <Card>
-           <Card.Body>
-             <Card.Title>Delete a Stream</Card.Title>
-             <Form>
-                <FormGroup className="mb-3">
-                    <FormControl
-                        name="recipient"
-                        value={recipient}
-                        onChange={handleRecipientChange}
-                        placeholder="Enter your Ethereum address"
-                    ></FormControl>
-                </FormGroup>
-              </Form>  
-            <Container>
-             <Row>
-               <Col></Col>
-               <Col xs={5}>
-               <DeleteButton
-                    onClick={() => {
-                        setIsButtonLoading(true);
-                        deleteFlow(recipient);
-                        setTimeout(() => {
-                            setIsButtonLoading(false);
-                        }, 1000);
-                    }}
-                >
-                    Click to Delete Your Stream
-                </DeleteButton>
-                </Col>
-                <Col></Col>
-             </Row>
-            </Container>
-           </Card.Body>
-         </Card>
-       </CardGroup>    
-      </div>
-    </div>
-  )
-}
-
-export default Stream
+                           
