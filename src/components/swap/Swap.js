@@ -12,7 +12,7 @@ const Swap = () => {
           <Navbar />
         </div>
        <div className="sfb__heather">
-         <h1 className="gradient__text">Swap/Bridge Tokens</h1>
+         <h1 className="gradient__text">BOB 4.0/Bridge Tokens</h1>
        </div>
        <div className="sfb__swap">
         <SwapWidget />
