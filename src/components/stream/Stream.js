@@ -280,4 +280,4 @@ const Stream = () => {
   )
 }
 
-export default Stre
+export default Stream
