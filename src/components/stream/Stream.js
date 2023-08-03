@@ -1,3 +1,116 @@
+import { InfoRounded } from '@mui/icons-material'; 
+ import { Box, Breakpoint, Button, alpha } from '@mui/material'; 
+ import { styled } from '@mui/material/styles'; 
+  
+ export const MultisigConfirmationModalContainer = styled(Box)(({ theme }) => ({ 
+   position: 'absolute', 
+   top: '64px', 
+   left: '50%', 
+   transform: 'translateX(-50%)', 
+   width: '392px', 
+   [theme.breakpoints.up('sm' as Breakpoint)]: { top: '72px' }, 
+   [theme.breakpoints.up('md' as Breakpoint)]: { 
+     top: '50%', 
+     transform: 'translate(-50%, -50%)', 
+   }, 
+   display: 'flex', 
+   flexDirection: 'column', 
+   alignItems: 'center', 
+   padding: theme.spacing(6), 
+   borderRadius: '16px', 
+   background: 
+     theme.palette.mode === 'dark' 
+       ? theme.palette.surface2.main 
+       : theme.palette.surface1.main, 
+   boxShadow: 
+     theme.palette.mode === 'dark' 
+       ? '0px 2px 4px rgba(0, 0, 0, 0.08), 0px 8px 16px rgba(0, 0, 0, 0.16)' 
+       : '0px 2px 4px rgba(0, 0, 0, 0.08), 0px 8px 16px rgba(0, 0, 0, 0.08)', 
+ })); 
+  
+ export const MultisigConfirmationModalButton = styled(Button)(({ theme }) => ({ 
+   width: '100%', 
+   borderRadius: '24px', 
+   fontWeight: 700, 
+   padding: theme.spacing(2.5, 0), 
+ })); 
+  
+ export const MultisigConfirmationModalIconContainer = styled(Box)( 
+   ({ theme }) => ({ 
+     backgroundColor: alpha(theme.palette.info.main, 0.12), 
+     borderRadius: '100%', 
+     height: '96px', 
+     width: '96px', 
+     display: 'flex', 
+     justifyContent: 'center', 
+     alignItems: 'center', 
+     marginBottom: '24px', 
+   }), 
+ ); 
+  
+ export const MultisigConfirmationModalIcon = styled(InfoRounded)( 
+   ({ theme }) => ({ 
+     margin: '24px', 
+     height: '48px', 
+     width: '48px', 
+     color: theme.palette.info.main, 
+     zIndex: 2, 
+   }), 
+ );
+
+import { Modal, Typography } from '@mui/material'; 
+  
+ import { ButtonPrimary } from '@transferto/shared/src'; 
+ import { useTranslation } from 'react-i18next'; 
+ import { 
+   MultisigConfirmationModalContainer, 
+   MultisigConfirmationModalIcon, 
+   MultisigConfirmationModalIconContainer, 
+ } from './MultisigConfirmationModal.style'; 
+  
+ export const MultisigConfirmationModal: React.FC<{ 
+   open: boolean; 
+   onClose: () => void; 
+ }> = ({ open, onClose }) => { 
+   const i18Path = 'multisig.transactionInitiated'; 
+  
+   const { t: translate } = useTranslation(); 
+  
+   return ( 
+     <Modal open={open} onClose={onClose}> 
+       <MultisigConfirmationModalContainer> 
+         <MultisigConfirmationModalIconContainer> 
+           <MultisigConfirmationModalIcon /> 
+         </MultisigConfirmationModalIconContainer> 
+         <Typography 
+           fontWeight={700} 
+           textAlign={'center'} 
+           marginY={4} 
+           style={{ 
+             fontSize: '1.125rem', 
+           }} 
+         > 
+           {translate(`${i18Path}.title`)} 
+         </Typography> 
+         <Typography fontSize={'1.125 rem'} marginY={4}> 
+           {translate(`${i18Path}.description`)} 
+         </Typography> 
+         <ButtonPrimary 
+           style={{ 
+             width: '100%', 
+           }} 
+           variant="contained" 
+           onClick={onClose} 
+         > 
+           {translate(`button.okay`)} 
+         </ButtonPrimary> 
+       </MultisigConfirmationModalContainer> 
+     </Modal> 
+   )
+ }
+
+
+
 import { Route } from '@lifi/sdk'; 
  import { useUserTracking } from '../../hooks'; 
   
@@ -195,3 +308,107 @@ import { Route } from '@lifi/sdk';
      </> 
    ); 
  }
+
+ import { styled } from '@mui/material/styles'; 
+ import { Box, Breakpoint, Button, alpha } from '@mui/material'; 
+ import { InfoRounded } from '@mui/icons-material'; 
+  
+ export const MultisigConnectedAlertContainer = styled(Box)(({ theme }) => ({ 
+   position: 'absolute', 
+   top: '64px', 
+   left: '50%', 
+   transform: 'translateX(-50%)', 
+   width: '392px', 
+   [theme.breakpoints.up('sm' as Breakpoint)]: { top: '72px' }, 
+   [theme.breakpoints.up('md' as Breakpoint)]: { 
+     top: '50%', 
+     transform: 'translate(-50%, -50%)', 
+   }, 
+   display: 'flex', 
+   flexDirection: 'column', 
+   alignItems: 'center', 
+   padding: theme.spacing(6), 
+   borderRadius: '16px', 
+   background: 
+     theme.palette.mode === 'dark' 
+       ? theme.palette.surface2.main 
+       : theme.palette.surface1.main, 
+   boxShadow: 
+     theme.palette.mode === 'dark' 
+       ? '0px 2px 4px rgba(0, 0, 0, 0.08), 0px 8px 16px rgba(0, 0, 0, 0.16)' 
+       : '0px 2px 4px rgba(0, 0, 0, 0.08), 0px 8px 16px rgba(0, 0, 0, 0.08)', 
+ })); 
+  
+ export const MultisigConnectedAlertButton = styled(Button)(({ theme }) => ({ 
+   width: '100%', 
+   borderRadius: '24px', 
+   fontWeight: 700, 
+   padding: theme.spacing(2.5, 0), 
+ })); 
+  
+ export const MultisigConnectedAlertIconContainer = styled(Box)(({ theme }) => ({ 
+   backgroundColor: alpha(theme.palette.info.main, 0.12), 
+   borderRadius: '100%', 
+   height: '96px', 
+   width: '96px', 
+   display: 'flex', 
+   justifyContent: 'center', 
+   alignItems: 'center', 
+   marginBottom: '24px', 
+ })); 
+  
+ export const MultisigConnectedAlertIcon = styled(InfoRounded)(({ theme }) => ({ 
+   margin: '24px', 
+   height: '48px', 
+   width: '48px', 
+   color: theme.palette.info.main, 
+   zIndex: 2, 
+ }));
+ import { Modal, Typography } from '@mui/material'; 
+ import { ButtonPrimary, useTranslation } from '@transferto/shared/src'; 
+ import { 
+   MultisigConnectedAlertContainer, 
+   MultisigConnectedAlertIcon, 
+   MultisigConnectedAlertIconContainer, 
+ } from './MultisigConnectedAlert.style'; 
+  
+ export const MultisigConnectedAlert: React.FC<{ 
+   open: boolean; 
+   onClose: () => void; 
+ }> = ({ open, onClose }) => { 
+   const i18Path = 'multisig.connected'; 
+  
+   const { t: translate } = useTranslation(); 
+  
+   return ( 
+     <Modal open={open} onClose={onClose}> 
+       <MultisigConnectedAlertContainer> 
+         <MultisigConnectedAlertIconContainer> 
+           <MultisigConnectedAlertIcon /> 
+         </MultisigConnectedAlertIconContainer> 
+         <Typography 
+           fontWeight={700} 
+           textAlign={'center'} 
+           marginY={4} 
+           style={{ 
+             fontSize: '1.125rem', 
+           }} 
+         > 
+           {translate(`${i18Path}.title`)} 
+         </Typography> 
+         <Typography fontSize={'1.125 rem'} marginY={4}> 
+           {translate(`${i18Path}.description`)} 
+         </Typography> 
+         <ButtonPrimary 
+           onClick={onClose} 
+           style={{ 
+             width: '100%', 
+           }} 
+         > 
+           {translate(`button.okay`)} 
+         </ButtonPrimary> 
+       </MultisigConnectedAlertContainer> 
+     </Modal> 
+   ); 
+ };
+ 
