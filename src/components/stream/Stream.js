@@ -1,414 +1,283 @@
-import { InfoRounded } from '@mui/icons-material'; 
- import { Box, Breakpoint, Button, alpha } from '@mui/material'; 
- import { styled } from '@mui/material/styles'; 
+import React from 'react'; 
+ import { useState, useEffect } from "react"; 
+ import './stream.css'; 
+ import Navbar from '../navbar/Navbar'; 
+ import Sidebar from '../sidebar/Sidebar'; 
+ import { Button, Form, CardGroup} from "../../utils/Scripts"; 
+ import { FormGroup, FormControl, Spinner, Card, Container, Row, Col, Stack } from "react-bootstrap"; 
+ import createNewFlow from '../../superfluidFunctions/createStream'; 
+ import updateExistingFlow from '../../superfluidFunctions/updateStream'; 
+ import deleteFlow from '../../superfluidFunctions/deleteStream'; 
+ import UpgradeNear from '../../superfluidFunctions/upgradeNear'; 
+ import DowngradeNear from '../../superfluidFunctions/downgradeNear'; 
   
- export const MultisigConfirmationModalContainer = styled(Box)(({ theme }) => ({ 
-   position: 'absolute', 
-   top: '64px', 
-   left: '50%', 
-   transform: 'translateX(-50%)', 
-   width: '392px', 
-   [theme.breakpoints.up('sm' as Breakpoint)]: { top: '72px' }, 
-   [theme.breakpoints.up('md' as Breakpoint)]: { 
-     top: '50%', 
-     transform: 'translate(-50%, -50%)', 
-   }, 
-   display: 'flex', 
-   flexDirection: 'column', 
-   alignItems: 'center', 
-   padding: theme.spacing(6), 
-   borderRadius: '16px', 
-   background: 
-     theme.palette.mode === 'dark' 
-       ? theme.palette.surface2.main 
-       : theme.palette.surface1.main, 
-   boxShadow: 
-     theme.palette.mode === 'dark' 
-       ? '0px 2px 4px rgba(0, 0, 0, 0.08), 0px 8px 16px rgba(0, 0, 0, 0.16)' 
-       : '0px 2px 4px rgba(0, 0, 0, 0.08), 0px 8px 16px rgba(0, 0, 0, 0.08)', 
- })); 
+ const Stream = () => { 
+     const [recipient, setRecipient] = useState(""); 
+     const [isButtonLoading, setIsButtonLoading] = useState(false); 
+     const [flowRate, setFlowRate] = useState(""); 
+     const [flowRateDisplay, setFlowRateDisplay] = useState(""); 
+     const [currentAccount, setCurrentAccount] = useState(""); 
   
- export const MultisigConfirmationModalButton = styled(Button)(({ theme }) => ({ 
-   width: '100%', 
-   borderRadius: '24px', 
-   fontWeight: 700, 
-   padding: theme.spacing(2.5, 0), 
- })); 
-  
- export const MultisigConfirmationModalIconContainer = styled(Box)( 
-   ({ theme }) => ({ 
-     backgroundColor: alpha(theme.palette.info.main, 0.12), 
-     borderRadius: '100%', 
-     height: '96px', 
-     width: '96px', 
-     display: 'flex', 
-     justifyContent: 'center', 
-     alignItems: 'center', 
-     marginBottom: '24px', 
-   }), 
- ); 
-  
- export const MultisigConfirmationModalIcon = styled(InfoRounded)( 
-   ({ theme }) => ({ 
-     margin: '24px', 
-     height: '48px', 
-     width: '48px', 
-     color: theme.palette.info.main, 
-     zIndex: 2, 
-   }), 
- );
-
-import { Modal, Typography } from '@mui/material'; 
-  
- import { ButtonPrimary } from '@transferto/shared/src'; 
- import { useTranslation } from 'react-i18next'; 
- import { 
-   MultisigConfirmationModalContainer, 
-   MultisigConfirmationModalIcon, 
-   MultisigConfirmationModalIconContainer, 
- } from './MultisigConfirmationModal.style'; 
-  
- export const MultisigConfirmationModal: React.FC<{ 
-   open: boolean; 
-   onClose: () => void; 
- }> = ({ open, onClose }) => { 
-   const i18Path = 'multisig.transactionInitiated'; 
-  
-   const { t: translate } = useTranslation(); 
-  
-   return ( 
-     <Modal open={open} onClose={onClose}> 
-       <MultisigConfirmationModalContainer> 
-         <MultisigConfirmationModalIconContainer> 
-           <MultisigConfirmationModalIcon /> 
-         </MultisigConfirmationModalIconContainer> 
-         <Typography 
-           fontWeight={700} 
-           textAlign={'center'} 
-           marginY={4} 
-           style={{ 
-             fontSize: '1.125rem', 
-           }} 
-         > 
-           {translate(`${i18Path}.title`)} 
-         </Typography> 
-         <Typography fontSize={'1.125 rem'} marginY={4}> 
-           {translate(`${i18Path}.description`)} 
-         </Typography> 
-         <ButtonPrimary 
-           style={{ 
-             width: '100%', 
-           }} 
-           variant="contained" 
-           onClick={onClose} 
-         > 
-           {translate(`button.okay`)} 
-         </ButtonPrimary> 
-       </MultisigConfirmationModalContainer> 
-     </Modal> 
-   )
- }
-
-
-
-import { Route } from '@lifi/sdk'; 
- import { useUserTracking } from '../../hooks'; 
-  
- import { 
-   ChainTokenSelected, 
-   RouteContactSupport, 
-   RouteExecutionUpdate, 
-   RouteHighValueLossUpdate, 
-   WidgetEvent, 
-   useWidgetEvents, 
- } from '@lifi/widget'; 
- import { useEffect, useRef, useState } from 'react'; 
- import { TrackingActions, TrackingCategories } from '../../const'; 
- import { useMultisig } from '../../hooks/useMultisig'; 
- import { useWallet } from '../../providers/WalletProvider'; 
- import { useMenuStore, useMultisigStore } from '../../stores'; 
- import { MultisigConfirmationModal } from '../MultisigConfirmationModal'; 
- import { MultisigConnectedAlert } from '../MultisigConnectedAlert'; 
-  
- export function WidgetEvents() { 
-   const lastTxHashRef = useRef<string>(); 
-   const { trackEvent, trackTransaction, trackAttribute } = useUserTracking(); 
-   const [onOpenSupportModal] = useMenuStore((state) => [ 
-     state.onOpenSupportModal, 
-   ]); 
-   const widgetEvents = useWidgetEvents(); 
-   const { isMultisigSigner, shouldOpenMultisigSignatureModal } = useMultisig(); 
-   const [onDestinationChainSelected] = useMultisigStore((state) => [ 
-     state.onDestinationChainSelected, 
-   ]); 
-  
-   const { account } = useWallet(); 
-  
-   const [isMultiSigConfirmationModalOpen, setIsMultiSigConfirmationModalOpen] = 
-     useState(false); 
-  
-   const [isMultisigConnectedAlertOpen, setIsMultisigConnectedAlertOpen] = 
-     useState(false); 
-  
-   useEffect(() => { 
-     const onRouteExecutionStarted = async (route: Route) => { 
-       if (!!route?.id) { 
-         trackEvent({ 
-           category: TrackingCategories.WidgetEvent, 
-           action: TrackingActions.OnRouteExecutionStarted, 
-           data: { 
-             routeId: route.id, 
-             steps: route.steps, 
-             fromToken: route.fromToken, 
-             fromChainId: route.fromChainId, 
-             toToken: route.toToken, 
-             toChainId: route.toChainId, 
-             fromAmount: route.fromAmount, 
-             toAmount: route.toAmount, 
-           }, 
-         }); 
-       } 
-     }; 
-     const onRouteExecutionUpdated = async (update: RouteExecutionUpdate) => { 
-       // check if multisig and open the modal 
-  
-       const isMultisigRouteActive = shouldOpenMultisigSignatureModal( 
-         update.route, 
-       ); 
-  
-       if (isMultisigRouteActive) { 
-         setIsMultiSigConfirmationModalOpen(true); 
-       } 
-  
-       if (!!update?.process && !!update.route) { 
-         if (update.process.txHash !== lastTxHashRef.current) { 
-           lastTxHashRef.current = update.process.txHash; 
-           trackTransaction({ 
-             chain: update.route.fromChainId, 
-             transactionHash: update.process.txHash, 
-             category: TrackingCategories.WidgetEvent, 
-             action: TrackingActions.OnRouteExecutionUpdated, 
-             data: { 
-               routeId: `${update.route.id}`, 
-               transactionLink: update.process.txLink, 
-               steps: update.route.steps, 
-               status: update.process.status, 
-               nonInteraction: true, 
-             }, 
-           }); 
+     const connectWallet = async () => { 
+         const { ethereum } = window; 
+         if (!ethereum) { 
+             console.log("Ensure you have a MetaMask"); 
          } 
-       } 
+  
+         try { 
+             const accounts = await ethereum.request({ 
+                 method: "eth_requestAccounts", 
+             }); 
+             setCurrentAccount(accounts[0]); 
+         } catch (error) { 
+             console.log("Error connecting to wallet: ", error); 
+         } 
      }; 
-     const onRouteExecutionCompleted = async (route: Route) => { 
-       if (!!route?.id) { 
-         trackEvent({ 
-           category: TrackingCategories.WidgetEvent, 
-           action: TrackingActions.OnRouteExecutionCompleted, 
-           data: { 
-             routeId: route.id, 
-             steps: route.steps, 
-             fromChainId: route.fromChainId, 
-             fromAmountUSD: route.fromAmountUSD, 
-             fromAmount: route.fromAmount, 
-             fromToken: route.fromToken, 
-             fromAddress: route.fromAddress, 
-             toChainId: route.toChainId, 
-             toAmountUSD: route.toAmountUSD, 
-             toAmount: route.toAmount, 
-             toAmountMin: route.toAmountMin, 
-             toToken: route.toToken, 
-           }, 
+  
+     const checkIfWalletIsConnected = async () => { 
+         const { ethereum } = window; 
+         if (!ethereum) { 
+             console.log("Ensure you have a MetaMask"); 
+         } 
+         const accounts = await ethereum.request({ 
+             method: "eth_requestAccounts", 
          }); 
-       } 
-     }; 
-     const onRouteExecutionFailed = async (update: RouteExecutionUpdate) => { 
-       trackEvent({ 
-         category: TrackingCategories.WidgetEvent, 
-         action: TrackingActions.OnRouteExecutionFailed, 
-         data: { 
-           routeId: update?.route?.id, 
-           transactionHash: update.process.txHash, 
-           status: update.process.status, 
-           message: update.process.message, 
-           error: update.process.error, 
-           steps: update.route.steps, 
-         }, 
-       }); 
+         const chain = await ethereum.request({ method: "eth_chainId" }); 
+         console.log("chain ID:", chain); 
+  
+         console.log(accounts[0]); 
+         console.log('0x888D08001F91D0eEc2f16364779697462A9A713D'); 
+  
+         if (accounts.length > 0) { 
+             console.log("Found an authorized account: ", accounts[0]); 
+             setCurrentAccount(accounts[0]); 
+         } else { 
+             console.log("No authorized account found"); 
+         } 
      }; 
   
-     const onRouteHighValueLoss = (update: RouteHighValueLossUpdate) => { 
-       trackEvent({ 
-         action: TrackingActions.OnRouteHighValueLoss, 
-         category: TrackingCategories.WidgetEvent, 
-         label: 'click-highValueLossAccepted', 
-         data: { 
-           ...update, 
-           timestamp: Date.now(), 
-         }, 
-       }); 
+     useEffect(() => { 
+         checkIfWalletIsConnected(); 
+     }); 
+  
+     function calculateFlowRate(amount) { 
+         if ( 
+             typeof Number(amount) !== "number" || 
+             isNaN(Number(amount)) === true 
+         ) { 
+             alert("You can only calculate a flowRate based on a number"); 
+             return; 
+         } else if (typeof Number(amount) === "number") { 
+             if (Number(amount) === 0) { 
+                 return 0; 
+             } 
+             const amountInWei = ethers.BigNumber.from(amount); 
+             const monthlyAmount = ethers.utils.formatEther( 
+                 amountInWei.toString() 
+             ); 
+             const calculatedFlowRate = monthlyAmount * 3600 * 24 * 30; 
+             return calculatedFlowRate; 
+         } 
+     } 
+  
+  
+     function CreateButton({ isLoading, children, ...props }) { 
+         return ( 
+             <Button variant="success" className="button" {...props}> 
+                 {isButtonLoading ? <Spinner animation="border" /> : children} 
+             </Button> 
+         ); 
+     } 
+  
+     function UpdateButton({ isLoading, children, ...props }) { 
+         return ( 
+             <Button variant="success" className="button" {...props}> 
+                 {isButtonLoading ? <Spinner animation="border" /> : children} 
+             </Button> 
+         ); 
+     } 
+  
+     function DeleteButton({ isLoading, children, ...props }) { 
+         return ( 
+             <Button variant="success" className="button" {...props}> 
+                 {isButtonLoading ? <Spinner animation="border" /> : children} 
+             </Button> 
+         ); 
+     } 
+  
+     const handleRecipientChange = (event) => { 
+         setRecipient(() => ([event.target.name] = event.target.value)); 
      }; 
   
-     const onRouteContactSupport = (supportId: RouteContactSupport) => { 
-       onOpenSupportModal(true); 
+     const handleFlowRateChange = (event) => { 
+         setFlowRate(() => ([event.target.name] = event.target.value)); 
+         let newFlowRateDisplay = calculateFlowRate(event.target.value); 
+         setFlowRateDisplay(newFlowRateDisplay.toString()); 
      }; 
-  
-     const handleMultisigChainTokenSelected = ( 
-       destinationData: ChainTokenSelected, 
-     ) => { 
-       onDestinationChainSelected(destinationData.chainId); 
-     }; 
-  
-     widgetEvents.on(WidgetEvent.RouteExecutionStarted, onRouteExecutionStarted); 
-     widgetEvents.on(WidgetEvent.RouteExecutionUpdated, onRouteExecutionUpdated); 
-     widgetEvents.on( 
-       WidgetEvent.RouteExecutionCompleted, 
-       onRouteExecutionCompleted, 
-     ); 
-     widgetEvents.on(WidgetEvent.RouteExecutionFailed, onRouteExecutionFailed); 
-     widgetEvents.on(WidgetEvent.RouteHighValueLoss, onRouteHighValueLoss); 
-     widgetEvents.on(WidgetEvent.RouteContactSupport, onRouteContactSupport); 
-     widgetEvents.on( 
-       WidgetEvent.DestinationChainTokenSelected, 
-       handleMultisigChainTokenSelected, 
-     ); 
-  
-     return () => widgetEvents.all.clear(); 
-   }, [ 
-     onDestinationChainSelected, 
-     onOpenSupportModal, 
-     shouldOpenMultisigSignatureModal, 
-     trackAttribute, 
-     trackEvent, 
-     trackTransaction, 
-     widgetEvents, 
-   ]); 
-  
-   const handleMultiSigConfirmationModalClose = () => { 
-     setIsMultiSigConfirmationModalOpen(false); 
-   }; 
-  
-   const handleMultisigWalletConnectedModalClose = () => { 
-     setIsMultisigConnectedAlertOpen(false); 
-   }; 
-  
-   useEffect(() => { 
-     setIsMultisigConnectedAlertOpen(isMultisigSigner); 
-   }, [account.address]); 
   
    return ( 
-     <> 
-       <MultisigConnectedAlert 
-         open={isMultisigConnectedAlertOpen} 
-         onClose={handleMultisigWalletConnectedModalClose} 
-       /> 
-       <MultisigConfirmationModal 
-         open={isMultiSigConfirmationModalOpen} 
-         onClose={handleMultiSigConfirmationModalClose} 
-       /> 
-     </> 
-   ); 
- }
-
- import { styled } from '@mui/material/styles'; 
- import { Box, Breakpoint, Button, alpha } from '@mui/material'; 
- import { InfoRounded } from '@mui/icons-material'; 
+     <div> 
+         <div className='per__navi'> 
+           <Sidebar /> 
+           <Navbar /> 
+         </div> 
+         <div className="sfb__heather"> 
+          <h1 className="gradient__text">Stream Near</h1> 
+        </div> 
+        <div> 
+        <CardGroup> 
+          <Card> 
+            <Card.Body> 
+              <UpgradeNear /> 
+            </Card.Body> 
+          </Card> 
+          <Card> 
+            <Card.Body> 
+              <Card.Title>Send Stream</Card.Title> 
+              <Form> 
+               <FormGroup className="mb-4"> 
+               <Form.Label>Stream to Address</Form.Label>  
+                 <FormControl 
+                     name="recipient" 
+                     value={recipient} 
+                     onChange={handleRecipientChange} 
+                     placeholder="Enter recipient address" 
+                 ></FormControl> 
+               </FormGroup> 
+               <FormGroup className="mb-4"> 
+               <Form.Label>Amount to Stream</Form.Label> 
+                 <FormControl 
+                     name="flowRate" 
+                     value={flowRate} 
+                     onChange={handleFlowRateChange} 
+                     placeholder="Enter a flowRate in wei/second" 
+                 ></FormControl> 
+                 </FormGroup> 
+             </Form> 
+             <Stack gap={3}> 
+             <div className="description"> 
+               <div className="calculation"> 
+                 <p>Your flow will be equal to:</p> 
+                 <p> 
+                 <b>{flowRateDisplay !== " " ? flowRateDisplay : 0}</b>{" "} 
+                 NEARx/month 
+                 </p> 
+               </div> 
+             </div> 
+             <Container> 
+              <Row> 
+                <Col></Col> 
+                <Col xs={5}> 
+                  <CreateButton 
+                    onClick={() => { 
+                      setIsButtonLoading(true); 
+                      createNewFlow(recipient, flowRate); 
+                      setTimeout(() => { 
+                        setIsButtonLoading(false); 
+                        }, 1000); 
+                      }} 
+                      > 
+                      Click to Create Your Stream 
+                  </CreateButton> 
+                 </Col> 
+                 <Col></Col> 
+              </Row> 
+             </Container> 
+             </Stack> 
+            </Card.Body> 
+          </Card> 
+          <Card> 
+            <Card.Body> 
+              <DowngradeNear /> 
+            </Card.Body> 
+          </Card> 
+        </CardGroup>     
+       </div> 
+       <div className="sfb__heather"> 
+         <h1 className="gradient__text">Change a Flow</h1> 
+       </div> 
+       <div> 
+        <CardGroup> 
+          <Card> 
+            <Card.Body> 
+              <Card.Title>Update a Stream</Card.Title> 
+              <Form> 
+                 <FormGroup className="mb-3">  
+                     <FormControl 
+                         name="recipient" 
+                         value={recipient} 
+                         onChange={handleRecipientChange} 
+                         placeholder="Enter your Ethereum address" 
+                     ></FormControl> 
+                 </FormGroup> 
+                 <FormGroup className="mb-3"> 
+                     <FormControl 
+                         name="flowRate" 
+                         value={flowRate} 
+                         onChange={handleFlowRateChange} 
+                         placeholder="Enter a flowRate in wei/second" 
+                     ></FormControl> 
+                 </FormGroup> 
+                 <Container> 
+                 <Row> 
+                   <Col></Col> 
+                   <Col xs={5}> 
+                     <UpdateButton 
+                     onClick={() => { 
+                         setIsButtonLoading(true); 
+                         updateExistingFlow(recipient, flowRate); 
+                         setTimeout(() => { 
+                             setIsButtonLoading(false); 
+                         }, 1000); 
+                     }} 
+                 > 
+                        Click to Update Your Stream 
+                     </UpdateButton> 
+                   </Col> 
+                   <Col></Col> 
+                 </Row> 
+                 </Container> 
+               </Form> 
+            </Card.Body> 
+          </Card> 
+          <Card> 
+            <Card.Body> 
+              <Card.Title>Delete a Stream</Card.Title> 
+              <Form> 
+                 <FormGroup className="mb-3"> 
+                     <FormControl 
+                         name="recipient" 
+                         value={recipient} 
+                         onChange={handleRecipientChange} 
+                         placeholder="Enter your Ethereum address" 
+                     ></FormControl> 
+                 </FormGroup> 
+               </Form>   
+             <Container> 
+              <Row> 
+                <Col></Col> 
+                <Col xs={5}> 
+                <DeleteButton 
+                     onClick={() => { 
+                         setIsButtonLoading(true); 
+                         deleteFlow(recipient); 
+                         setTimeout(() => { 
+                             setIsButtonLoading(false); 
+                         }, 1000); 
+                     }} 
+                 > 
+                     Click to Delete Your Stream 
+                 </DeleteButton> 
+                 </Col> 
+                 <Col></Col> 
+              </Row> 
+             </Container> 
+            </Card.Body> 
+          </Card> 
+        </CardGroup>     
+       </div> 
+     </div> 
+   ) 
+ } 
   
- export const MultisigConnectedAlertContainer = styled(Box)(({ theme }) => ({ 
-   position: 'absolute', 
-   top: '64px', 
-   left: '50%', 
-   transform: 'translateX(-50%)', 
-   width: '392px', 
-   [theme.breakpoints.up('sm' as Breakpoint)]: { top: '72px' }, 
-   [theme.breakpoints.up('md' as Breakpoint)]: { 
-     top: '50%', 
-     transform: 'translate(-50%, -50%)', 
-   }, 
-   display: 'flex', 
-   flexDirection: 'column', 
-   alignItems: 'center', 
-   padding: theme.spacing(6), 
-   borderRadius: '16px', 
-   background: 
-     theme.palette.mode === 'dark' 
-       ? theme.palette.surface2.main 
-       : theme.palette.surface1.main, 
-   boxShadow: 
-     theme.palette.mode === 'dark' 
-       ? '0px 2px 4px rgba(0, 0, 0, 0.08), 0px 8px 16px rgba(0, 0, 0, 0.16)' 
-       : '0px 2px 4px rgba(0, 0, 0, 0.08), 0px 8px 16px rgba(0, 0, 0, 0.08)', 
- })); 
-  
- export const MultisigConnectedAlertButton = styled(Button)(({ theme }) => ({ 
-   width: '100%', 
-   borderRadius: '24px', 
-   fontWeight: 700, 
-   padding: theme.spacing(2.5, 0), 
- })); 
-  
- export const MultisigConnectedAlertIconContainer = styled(Box)(({ theme }) => ({ 
-   backgroundColor: alpha(theme.palette.info.main, 0.12), 
-   borderRadius: '100%', 
-   height: '96px', 
-   width: '96px', 
-   display: 'flex', 
-   justifyContent: 'center', 
-   alignItems: 'center', 
-   marginBottom: '24px', 
- })); 
-  
- export const MultisigConnectedAlertIcon = styled(InfoRounded)(({ theme }) => ({ 
-   margin: '24px', 
-   height: '48px', 
-   width: '48px', 
-   color: theme.palette.info.main, 
-   zIndex: 2, 
- }));
- import { Modal, Typography } from '@mui/material'; 
- import { ButtonPrimary, useTranslation } from '@transferto/shared/src'; 
- import { 
-   MultisigConnectedAlertContainer, 
-   MultisigConnectedAlertIcon, 
-   MultisigConnectedAlertIconContainer, 
- } from './MultisigConnectedAlert.style'; 
-  
- export const MultisigConnectedAlert: React.FC<{ 
-   open: boolean; 
-   onClose: () => void; 
- }> = ({ open, onClose }) => { 
-   const i18Path = 'multisig.connected'; 
-  
-   const { t: translate } = useTranslation(); 
-  
-   return ( 
-     <Modal open={open} onClose={onClose}> 
-       <MultisigConnectedAlertContainer> 
-         <MultisigConnectedAlertIconContainer> 
-           <MultisigConnectedAlertIcon /> 
-         </MultisigConnectedAlertIconContainer> 
-         <Typography 
-           fontWeight={700} 
-           textAlign={'center'} 
-           marginY={4} 
-           style={{ 
-             fontSize: '1.125rem', 
-           }} 
-         > 
-           {translate(`${i18Path}.title`)} 
-         </Typography> 
-         <Typography fontSize={'1.125 rem'} marginY={4}> 
-           {translate(`${i18Path}.description`)} 
-         </Typography> 
-         <ButtonPrimary 
-           onClick={onClose} 
-           style={{ 
-             width: '100%', 
-           }} 
-         > 
-           {translate(`button.okay`)} 
-         </ButtonPrimary> 
-       </MultisigConnectedAlertContainer> 
-     </Modal> 
-   ); 
- };
- 
+ export default Stream
