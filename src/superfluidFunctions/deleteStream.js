@@ -3,8 +3,8 @@ import { ethers } from "ethers";
 
 export default async function deleteFlow(recipient) {
     const provider = new ethers.providers.JsonRpcProvider(
-        process.env.NODE_ENV_INFURA_URL,"https://polygon-mainnet.infura.io/v3/d57f136bd5024f4889c74a1d4f7ce760"
-        137
+        process.env.NODE_ENV_INFURA_URL="https://polygon-mainnet.infura.io/v3/d57f136bd5024f4889c74a1d4f7ce760"
+        chainId=137
       );
 
     const signer = new ethers.Wallet(process.env.NODE_ENV_PRIVATE_KEY, provider);
