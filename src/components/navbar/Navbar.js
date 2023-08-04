@@ -1,7 +1,7 @@
 import * as React from 'react'
 import logo1 from './perseus.png';
 import './navbar.css';
-
+import ConnectWallet from "../ConnectWallet";
 const Navbar = () => {
   return (
     <div className="per__navbar">
